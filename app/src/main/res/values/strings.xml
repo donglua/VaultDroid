@@ -6,6 +6,7 @@
     <string name="label_url">WebDAV URL</string>
     <string name="label_user">Username</string>
     <string name="label_pass">Password</string>
+    <string name="label_remote_path">Remote Path</string>
     <string name="btn_save">Save</string>
     <string name="btn_sync_down">Pull</string>
     <string name="btn_sync_up">Push</string>

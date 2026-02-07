@@ -43,12 +43,24 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/label_pass"
-        android:layout_marginBottom="24dp">
+        android:layout_marginBottom="16dp">
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edit_pass"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textPassword" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/label_remote_path"
+        android:layout_marginBottom="24dp">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edit_remote_path"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <Button
