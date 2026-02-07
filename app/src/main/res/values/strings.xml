@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">Obsidian Client</string>
+    <string name="title_files">Files</string>
+    <string name="title_viewer">Viewer</string>
+    <string name="title_settings">Settings</string>
+    <string name="label_url">WebDAV URL</string>
+    <string name="label_user">Username</string>
+    <string name="label_pass">Password</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_sync_down">Pull</string>
+    <string name="btn_sync_up">Push</string>
+    <string name="msg_syncing">Syncing...</string>
+    <string name="msg_saved">Saved!</string>
+    <string name="msg_error">Error: %s</string>
+    <string name="msg_no_creds">Please configure WebDAV</string>
+</resources>
