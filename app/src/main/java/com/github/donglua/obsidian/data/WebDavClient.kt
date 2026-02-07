@@ -106,7 +106,11 @@ class WebDavClient(private val prefs: Prefs) {
             .header("Authorization", getAuthHeader())
             .method("MKCOL", null)
             .build()
-         client.newCall(request).execute().close()
+         client.newCall(request).execute().use { response ->
+             if (!response.isSuccessful && response.code != 405) {
+                 throw IOException("Failed to create folder at $path, status: ${response.code}")
+             }
+         }
     }
 
     private fun parsePropFind(xml: String): List<RemoteFile> {
