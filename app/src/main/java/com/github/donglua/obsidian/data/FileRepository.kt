@@ -146,4 +146,101 @@ class FileRepository(context: Context) {
         // User must "Manual Sync" to push.
         // This is consistent with requirement.
     }
+
+    suspend fun createFile(path: String, name: String): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                // 1. Local Create
+                val parentDir = if (path.isEmpty()) localRoot else File(localRoot, path)
+                if (!parentDir.exists()) parentDir.mkdirs()
+
+                val newFile = File(parentDir, name)
+                if (newFile.exists()) return@withContext false
+
+                newFile.createNewFile()
+
+                // 2. Remote Create (Upload empty)
+                val relativePath = if (path.isEmpty()) name else "$path/$name"
+                client.uploadFile(relativePath, "")
+
+                true
+            } catch (e: Exception) {
+                Log.e("Repo", "Create file failed", e)
+                false
+            }
+        }
+    }
+
+    suspend fun createFolder(path: String, name: String): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                // 1. Local Create
+                val parentDir = if (path.isEmpty()) localRoot else File(localRoot, path)
+                if (!parentDir.exists()) parentDir.mkdirs()
+
+                val newDir = File(parentDir, name)
+                if (newDir.exists()) return@withContext false
+
+                newDir.mkdirs()
+
+                // 2. Remote Create
+                val relativePath = if (path.isEmpty()) name else "$path/$name"
+                client.createFolder(relativePath)
+
+                true
+            } catch (e: Exception) {
+                Log.e("Repo", "Create folder failed", e)
+                false
+            }
+        }
+    }
+
+    suspend fun deleteFile(path: String, name: String): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                // 1. Local Delete
+                val parentDir = if (path.isEmpty()) localRoot else File(localRoot, path)
+                val target = File(parentDir, name)
+
+                if (target.exists()) {
+                    target.deleteRecursively()
+                }
+
+                // 2. Remote Delete
+                val relativePath = if (path.isEmpty()) name else "$path/$name"
+                client.delete(relativePath)
+
+                true
+            } catch (e: Exception) {
+                Log.e("Repo", "Delete failed", e)
+                false
+            }
+        }
+    }
+
+    suspend fun renameFile(path: String, oldName: String, newName: String): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                // 1. Local Rename
+                val parentDir = if (path.isEmpty()) localRoot else File(localRoot, path)
+                val source = File(parentDir, oldName)
+                val dest = File(parentDir, newName)
+
+                if (dest.exists()) return@withContext false
+
+                if (source.exists()) {
+                    source.renameTo(dest)
+                }
+
+                // 2. Remote Rename
+                val relativePath = if (path.isEmpty()) oldName else "$path/$oldName"
+                client.rename(relativePath, newName)
+
+                true
+            } catch (e: Exception) {
+                Log.e("Repo", "Rename failed", e)
+                false
+            }
+        }
+    }
 }
