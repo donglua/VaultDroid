@@ -25,7 +25,7 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnSave.setOnClickListener {
             val url = binding.editUrl.text.toString().trim()
             val user = binding.editUser.text.toString().trim()
-            val pass = binding.editPass.text.toString().trim()
+            val pass = binding.editPass.text.toString()
 
             if (url.isEmpty() || user.isEmpty() || pass.isEmpty()) {
                 Toast.makeText(this, "All fields required", Toast.LENGTH_SHORT).show()
