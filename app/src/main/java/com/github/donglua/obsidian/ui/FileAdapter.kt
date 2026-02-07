@@ -9,8 +9,9 @@ import androidx.recyclerview.widget.RecyclerView
 import java.io.File
 
 class FileAdapter(
-    private var files: List<File> = emptyList(),
-    private val onClick: (File) -> Unit
+    var files: List<File> = emptyList(),
+    private val onClick: (File) -> Unit,
+    private val onLongClick: (File) -> Unit
 ) : RecyclerView.Adapter<FileAdapter.FileViewHolder>() {
 
     fun updateFiles(newFiles: List<File>) {
@@ -25,7 +26,7 @@ class FileAdapter(
 
     override fun onBindViewHolder(holder: FileViewHolder, position: Int) {
         val file = files[position]
-        holder.bind(file, onClick)
+        holder.bind(file, onClick, onLongClick)
     }
 
     override fun getItemCount() = files.size
@@ -34,7 +35,7 @@ class FileAdapter(
         private val nameView: TextView = itemView.findViewById(com.github.donglua.obsidian.R.id.name)
         private val iconView: ImageView = itemView.findViewById(com.github.donglua.obsidian.R.id.icon)
 
-        fun bind(file: File, onClick: (File) -> Unit) {
+        fun bind(file: File, onClick: (File) -> Unit, onLongClick: (File) -> Unit) {
             nameView.text = file.name
 
             if (file.isDirectory) {
@@ -46,6 +47,10 @@ class FileAdapter(
             }
 
             itemView.setOnClickListener { onClick(file) }
+            itemView.setOnLongClickListener {
+                onLongClick(file)
+                true
+            }
         }
     }
 }

@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Obsidian Client</string>
     <string name="title_files">Files</string>
@@ -14,4 +15,23 @@
     <string name="msg_saved">Saved!</string>
     <string name="msg_error">Error: %s</string>
     <string name="msg_no_creds">Please configure WebDAV</string>
+
+    <!-- New Strings -->
+    <string name="action_new_note">New Note</string>
+    <string name="action_new_folder">New Folder</string>
+    <string name="action_rename">Rename</string>
+    <string name="action_delete">Delete</string>
+    <string name="dialog_title_new_note">New Note</string>
+    <string name="dialog_title_new_folder">New Folder</string>
+    <string name="dialog_title_rename">Rename</string>
+    <string name="dialog_title_delete">Delete</string>
+    <string name="dialog_message_delete">Are you sure you want to delete "%s"?</string>
+    <string name="dialog_hint_name">Name</string>
+    <string name="dialog_btn_create">Create</string>
+    <string name="dialog_btn_rename">Rename</string>
+    <string name="dialog_btn_delete">Delete</string>
+    <string name="dialog_btn_cancel">Cancel</string>
+    <string name="msg_success">Success</string>
+    <string name="msg_failed">Failed</string>
+    <string name="msg_exists">File already exists</string>
 </resources>

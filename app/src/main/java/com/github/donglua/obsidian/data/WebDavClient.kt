@@ -117,6 +117,41 @@ class WebDavClient(private val prefs: Prefs) {
          client.newCall(request).execute().close()
     }
 
+    fun delete(path: String) {
+        val fullUrl = getBaseUrl() + encodePath(path.trimStart('/'))
+        val request = Request.Builder()
+            .url(fullUrl)
+            .header("Authorization", getAuthHeader())
+            .delete()
+            .build()
+
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful && response.code != 404) {
+                throw IOException("Delete Error: ${response.code}")
+            }
+        }
+    }
+
+    fun rename(path: String, newName: String) {
+        val fullUrl = getBaseUrl() + encodePath(path.trimStart('/'))
+
+        val parentPath = path.trimEnd('/').substringBeforeLast('/', "")
+        val newPath = if (parentPath.isEmpty()) newName else "$parentPath/$newName"
+        val destinationUrl = getBaseUrl() + encodePath(newPath)
+
+        val request = Request.Builder()
+            .url(fullUrl)
+            .header("Authorization", getAuthHeader())
+            .header("Destination", destinationUrl)
+            .header("Overwrite", "F")
+            .method("MOVE", null)
+            .build()
+
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) throw IOException("Rename Error: ${response.code}")
+        }
+    }
+
     private fun parsePropFind(xml: String): List<RemoteFile> {
         val files = mutableListOf<RemoteFile>()
         try {
