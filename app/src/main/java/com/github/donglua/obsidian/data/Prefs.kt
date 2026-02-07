@@ -1,4 +1,4 @@
-package com.example.obsidian.data
+package com.github.donglua.obsidian.data
 
 import android.content.Context
 import android.content.SharedPreferences

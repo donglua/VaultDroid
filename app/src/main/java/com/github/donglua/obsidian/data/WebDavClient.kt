@@ -1,4 +1,4 @@
-package com.example.obsidian.data
+package com.github.donglua.obsidian.data
 
 import android.util.Log
 import okhttp3.Credentials
@@ -51,11 +51,20 @@ class WebDavClient(private val prefs: Prefs) {
             .build()
 
         client.newCall(request).execute().use { response ->
-            // 404 means folder doesn't exist. Return empty? Or throw?
             if (response.code == 404) return emptyList()
             if (!response.isSuccessful) throw IOException("WebDAV Error: ${response.code}")
             val body = response.body?.string() ?: ""
-            return parsePropFind(body)
+            val allFiles = parsePropFind(body)
+
+            // Filter out self-reference (infinite recursion fix)
+            // Strategy: The requested folder is always the shortest href in the response.
+            if (allFiles.isNotEmpty()) {
+                val shortest = allFiles.minByOrNull { it.href.length }
+                if (shortest != null) {
+                    return allFiles.filter { it != shortest }
+                }
+            }
+            return allFiles
         }
     }
 
@@ -110,7 +119,6 @@ class WebDavClient(private val prefs: Prefs) {
             var currentLastModified = 0L
             var inResponse = false
 
-            // WebDAV date format: RFC 1123
             val dateFormat = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US)
             dateFormat.timeZone = TimeZone.getTimeZone("GMT")
 
@@ -133,7 +141,7 @@ class WebDavClient(private val prefs: Prefs) {
                                     val dateStr = parser.nextText()
                                     currentLastModified = dateFormat.parse(dateStr)?.time ?: 0L
                                 } catch (e: Exception) {
-                                    // Ignore parse errors
+                                    // Ignore
                                 }
                             }
                         }

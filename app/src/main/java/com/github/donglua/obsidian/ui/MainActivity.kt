@@ -1,4 +1,4 @@
-package com.example.obsidian.ui
+package com.github.donglua.obsidian.ui
 
 import android.content.Intent
 import android.os.Bundle
@@ -6,9 +6,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.lifecycle.lifecycleScope
-import com.example.obsidian.data.FileRepository
-import com.example.obsidian.data.Prefs
-import com.example.obsidian.databinding.ActivityMainBinding
+import com.github.donglua.obsidian.data.FileRepository
+import com.github.donglua.obsidian.data.Prefs
+import com.github.donglua.obsidian.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
 import java.io.File
 import android.view.View
@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity() {
     private fun refreshFiles() {
         val files = repo.getLocalFiles(currentPath)
         adapter.updateFiles(files)
-        title = if (currentPath.isEmpty()) getString(com.example.obsidian.R.string.title_files) else currentPath
+        title = if (currentPath.isEmpty()) getString(com.github.donglua.obsidian.R.string.title_files) else currentPath
     }
 
     override fun onBackPressed() {
@@ -84,7 +84,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun sync() {
-        Toast.makeText(this, getString(com.example.obsidian.R.string.msg_syncing), Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, getString(com.github.donglua.obsidian.R.string.msg_syncing), Toast.LENGTH_SHORT).show()
         lifecycleScope.launch {
             val success = repo.syncAll()
             if (success) {

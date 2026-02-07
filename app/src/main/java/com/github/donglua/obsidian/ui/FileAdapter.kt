@@ -1,4 +1,4 @@
-package com.example.obsidian.ui
+package com.github.donglua.obsidian.ui
 
 import android.view.LayoutInflater
 import android.view.View
@@ -19,7 +19,7 @@ class FileAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FileViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(com.example.obsidian.R.layout.item_file, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(com.github.donglua.obsidian.R.layout.item_file, parent, false)
         return FileViewHolder(view)
     }
 
@@ -31,8 +31,8 @@ class FileAdapter(
     override fun getItemCount() = files.size
 
     class FileViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val nameView: TextView = itemView.findViewById(com.example.obsidian.R.id.name)
-        private val iconView: ImageView = itemView.findViewById(com.example.obsidian.R.id.icon)
+        private val nameView: TextView = itemView.findViewById(com.github.donglua.obsidian.R.id.name)
+        private val iconView: ImageView = itemView.findViewById(com.github.donglua.obsidian.R.id.icon)
 
         fun bind(file: File, onClick: (File) -> Unit) {
             nameView.text = file.name
