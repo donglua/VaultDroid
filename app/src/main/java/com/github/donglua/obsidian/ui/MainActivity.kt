@@ -2,8 +2,10 @@ package com.github.donglua.obsidian.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.GravityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.lifecycle.lifecycleScope
 import com.github.donglua.obsidian.data.FileRepository
@@ -11,14 +13,12 @@ import com.github.donglua.obsidian.data.Prefs
 import com.github.donglua.obsidian.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
 import java.io.File
-import android.view.View
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var repo: FileRepository
-    private lateinit var adapter: FileAdapter
-    private var currentPath = ""
+    private lateinit var adapter: TreeFileAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,20 +35,17 @@ class MainActivity : AppCompatActivity() {
 
         repo = FileRepository(this)
 
-        adapter = FileAdapter(emptyList()) { file ->
-            if (file.isDirectory) {
-                val newPath = file.absolutePath.substringAfter(filesDir.absolutePath).trimStart('/')
-                openFolder(newPath)
+        adapter = TreeFileAdapter(emptyList()) { node ->
+            if (node.file.isDirectory) {
+                TreeManager.toggle(node.file)
+                refreshFiles()
             } else {
-                val intent = Intent(this, ViewerActivity::class.java)
-                val relative = file.absolutePath.substringAfter(filesDir.absolutePath).trimStart('/')
-                intent.putExtra("path", relative)
-                startActivity(intent)
+                openFile(node.file)
             }
         }
 
-        binding.recyclerView.layoutManager = LinearLayoutManager(this)
-        binding.recyclerView.adapter = adapter
+        binding.recyclerViewTree.layoutManager = LinearLayoutManager(this)
+        binding.recyclerViewTree.adapter = adapter
 
         binding.fabSync.setOnClickListener {
             sync()
@@ -58,29 +55,34 @@ class MainActivity : AppCompatActivity() {
         sync()
     }
 
-    private fun openFolder(path: String) {
-        currentPath = path
-        refreshFiles()
-    }
-
     private fun refreshFiles() {
-        val files = repo.getLocalFiles(currentPath)
-        adapter.updateFiles(files)
-        title = if (currentPath.isEmpty()) getString(com.github.donglua.obsidian.R.string.title_files) else currentPath
+        val nodes = TreeManager.buildTree(filesDir)
+        adapter.updateNodes(nodes)
     }
 
-    override fun onBackPressed() {
-        if (currentPath.isNotEmpty()) {
-            val parent = File(filesDir, currentPath).parentFile
-            if (parent == null || parent == filesDir) {
-                currentPath = ""
-            } else {
-                 currentPath = parent.absolutePath.substringAfter(filesDir.absolutePath).trimStart('/')
-            }
-            refreshFiles()
+    private fun openFile(file: File) {
+        val relativePath = file.absolutePath.substringAfter(filesDir.absolutePath).trimStart('/')
+
+        if (isTablet()) {
+            val fragment = ViewerFragment.newInstance(relativePath)
+            supportFragmentManager.beginTransaction()
+                .replace(com.github.donglua.obsidian.R.id.fragment_container, fragment)
+                .commit()
+
+            // Hide placeholder
+            binding.tvPlaceholder.visibility = View.GONE
         } else {
-            super.onBackPressed()
+            val intent = Intent(this, ViewerActivity::class.java)
+            intent.putExtra("path", relativePath)
+            startActivity(intent)
+
+            // Close drawer on phone after selection
+            binding.drawerLayout.closeDrawer(GravityCompat.START)
         }
+    }
+
+    private fun isTablet(): Boolean {
+        return resources.getBoolean(com.github.donglua.obsidian.R.bool.is_tablet)
     }
 
     private fun sync() {
@@ -93,6 +95,14 @@ class MainActivity : AppCompatActivity() {
             } else {
                 Toast.makeText(this@MainActivity, "Sync Failed", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    override fun onBackPressed() {
+        if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            binding.drawerLayout.closeDrawer(GravityCompat.START)
+        } else {
+            super.onBackPressed()
         }
     }
 }
