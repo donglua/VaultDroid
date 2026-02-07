@@ -18,6 +18,10 @@ class Prefs(context: Context) {
         get() = prefs.getString("pass", "") ?: ""
         set(value) = prefs.edit().putString("pass", value).apply()
 
+    var remotePath: String
+        get() = prefs.getString("remote_path", "Obsidian Vault") ?: "Obsidian Vault"
+        set(value) = prefs.edit().putString("remote_path", value).apply()
+
     val isConfigured: Boolean
         get() = webDavUrl.isNotEmpty() && username.isNotEmpty()
 }
