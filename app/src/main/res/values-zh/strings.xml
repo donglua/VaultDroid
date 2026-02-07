@@ -6,6 +6,7 @@
     <string name="label_url">WebDAV 地址</string>
     <string name="label_user">用户名</string>
     <string name="label_pass">密码</string>
+    <string name="label_remote_path">远程路径</string>
     <string name="btn_save">保存</string>
     <string name="btn_sync_down">下载</string>
     <string name="btn_sync_up">上传</string>

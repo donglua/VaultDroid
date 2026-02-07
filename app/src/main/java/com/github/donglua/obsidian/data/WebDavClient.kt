@@ -11,6 +11,7 @@ import org.xmlpull.v1.XmlPullParserFactory
 import java.io.StringReader
 import java.io.IOException
 import java.net.URLDecoder
+import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -31,16 +32,27 @@ class WebDavClient(private val prefs: Prefs) {
         return Credentials.basic(prefs.username, prefs.password)
     }
 
+    private fun encodePath(path: String): String {
+        return path.split("/").joinToString("/") { segment ->
+            URLEncoder.encode(segment, "UTF-8").replace("+", "%20")
+        }
+    }
+
     private fun getBaseUrl(): String {
         var url = prefs.webDavUrl
         if (!url.endsWith("/")) url += "/"
+
+        val remote = prefs.remotePath.trimEnd('/')
+        if (remote.isNotEmpty()) {
+             url += encodePath(remote) + "/"
+        }
         return url
     }
 
     fun listFiles(path: String = ""): List<RemoteFile> {
         var fullUrl = getBaseUrl()
         if (path.isNotEmpty()) {
-             fullUrl += path.trim('/') + "/"
+             fullUrl += encodePath(path.trimStart('/').trimEnd('/')) + "/"
         }
 
         val request = Request.Builder()
@@ -69,7 +81,7 @@ class WebDavClient(private val prefs: Prefs) {
     }
 
     fun downloadFile(path: String): String {
-        val fullUrl = getBaseUrl() + path.trimStart('/')
+        val fullUrl = getBaseUrl() + encodePath(path.trimStart('/'))
         val request = Request.Builder()
             .url(fullUrl)
             .header("Authorization", getAuthHeader())
@@ -83,7 +95,7 @@ class WebDavClient(private val prefs: Prefs) {
     }
 
     fun uploadFile(path: String, content: String) {
-        val fullUrl = getBaseUrl() + path.trimStart('/')
+        val fullUrl = getBaseUrl() + encodePath(path.trimStart('/'))
         val request = Request.Builder()
             .url(fullUrl)
             .header("Authorization", getAuthHeader())
@@ -96,7 +108,7 @@ class WebDavClient(private val prefs: Prefs) {
     }
 
     fun createFolder(path: String) {
-         val fullUrl = getBaseUrl() + path.trimStart('/')
+         val fullUrl = getBaseUrl() + encodePath(path.trimStart('/'))
          val request = Request.Builder()
             .url(fullUrl)
             .header("Authorization", getAuthHeader())
