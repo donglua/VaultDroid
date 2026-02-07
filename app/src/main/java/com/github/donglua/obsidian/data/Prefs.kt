@@ -19,5 +19,5 @@ class Prefs(context: Context) {
         set(value) = prefs.edit().putString("pass", value).apply()
 
     val isConfigured: Boolean
-        get() = webDavUrl.isNotEmpty() && username.isNotEmpty()
+        get() = webDavUrl.isNotEmpty() && username.isNotEmpty() && password.isNotEmpty()
 }
