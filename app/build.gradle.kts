@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.obsidian"
+    namespace = "com.github.donglua.obsidian"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.obsidian"
+        applicationId = "com.github.donglua.obsidian"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

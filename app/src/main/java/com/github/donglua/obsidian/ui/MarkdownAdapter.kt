@@ -1,4 +1,4 @@
-package com.example.obsidian.ui
+package com.github.donglua.obsidian.ui
 
 import android.text.Spanned
 import android.view.LayoutInflater
@@ -39,9 +39,9 @@ class MarkdownAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         return if (viewType == TYPE_TASK) {
-            TaskViewHolder(inflater.inflate(com.example.obsidian.R.layout.item_markdown_task, parent, false))
+            TaskViewHolder(inflater.inflate(com.github.donglua.obsidian.R.layout.item_markdown_task, parent, false))
         } else {
-            TextViewHolder(inflater.inflate(com.example.obsidian.R.layout.item_markdown_text, parent, false))
+            TextViewHolder(inflater.inflate(com.github.donglua.obsidian.R.layout.item_markdown_text, parent, false))
         }
     }
 
@@ -57,15 +57,15 @@ class MarkdownAdapter(
     override fun getItemCount() = lines.size
 
     class TextViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val textView: TextView = itemView.findViewById(com.example.obsidian.R.id.text_content)
+        private val textView: TextView = itemView.findViewById(com.github.donglua.obsidian.R.id.text_content)
         fun bind(line: MarkdownLine, markwon: Markwon) {
             markwon.setMarkdown(textView, line.content)
         }
     }
 
     class TaskViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val checkBox: CheckBox = itemView.findViewById(com.example.obsidian.R.id.checkbox)
-        private val textView: TextView = itemView.findViewById(com.example.obsidian.R.id.text_content)
+        private val checkBox: CheckBox = itemView.findViewById(com.github.donglua.obsidian.R.id.checkbox)
+        private val textView: TextView = itemView.findViewById(com.github.donglua.obsidian.R.id.text_content)
 
         fun bind(line: MarkdownLine, markwon: Markwon, onTaskToggle: (Int, Boolean) -> Unit) {
             // Remove listener to avoid loops during binding
