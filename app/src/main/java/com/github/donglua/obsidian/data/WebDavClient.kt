@@ -152,70 +152,75 @@ class WebDavClient(private val prefs: Prefs) {
         }
     }
 
-    private fun parsePropFind(xml: String): List<RemoteFile> {
-        val files = mutableListOf<RemoteFile>()
-        try {
-            val factory = XmlPullParserFactory.newInstance()
-            factory.isNamespaceAware = true
-            val parser = factory.newPullParser()
-            parser.setInput(StringReader(xml))
-
-            var eventType = parser.eventType
-            var currentHref = ""
-            var currentIsFolder = false
-            var currentLastModified = 0L
-            var inResponse = false
-
-            val dateFormat = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US)
-            dateFormat.timeZone = TimeZone.getTimeZone("GMT")
-
-            while (eventType != XmlPullParser.END_DOCUMENT) {
-                val name = parser.name
-                when (eventType) {
-                    XmlPullParser.START_TAG -> {
-                        if (name.contains("response", ignoreCase = true)) {
-                            inResponse = true
-                            currentHref = ""
-                            currentIsFolder = false
-                            currentLastModified = 0L
-                        } else if (inResponse) {
-                            if (name.contains("href", ignoreCase = true)) {
-                                try { currentHref = parser.nextText() } catch (e: Exception) {}
-                            } else if (name.contains("collection", ignoreCase = true)) {
-                                currentIsFolder = true
-                            } else if (name.contains("getlastmodified", ignoreCase = true)) {
-                                try {
-                                    val dateStr = parser.nextText()
-                                    currentLastModified = dateFormat.parse(dateStr)?.time ?: 0L
-                                } catch (e: Exception) {
-                                    // Ignore
-                                }
-                            }
-                        }
-                    }
-                    XmlPullParser.END_TAG -> {
-                        if (name.contains("response", ignoreCase = true)) {
-                            if (currentHref.isNotEmpty() && inResponse) {
-                                try {
-                                    val decodedHref = URLDecoder.decode(currentHref, "UTF-8")
-                                    val fileName = decodedHref.trimEnd('/').substringAfterLast('/')
-
-                                    if (fileName.isNotEmpty()) {
-                                         files.add(RemoteFile(decodedHref, fileName, currentIsFolder, currentLastModified))
-                                    }
-                                } catch (e: Exception) {
-                                    Log.e("WebDav", "Href decode error", e)
-                                }
-                            }
-                            inResponse = false
-                        }
-                    }
-                }
-                eventType = parser.next()
+    companion object {
+        private val dateFormat = ThreadLocal.withInitial {
+            SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US).apply {
+                timeZone = TimeZone.getTimeZone("GMT")
             }
-        } catch (e: Exception) {
-            Log.e("WebDav", "XML Parse error", e)
         }
-        return files
+
+        internal fun parsePropFind(xml: String): List<RemoteFile> {
+            val files = mutableListOf<RemoteFile>()
+            try {
+                val factory = XmlPullParserFactory.newInstance()
+                factory.isNamespaceAware = true
+                val parser = factory.newPullParser()
+                parser.setInput(StringReader(xml))
+
+                var eventType = parser.eventType
+                var currentHref = ""
+                var currentIsFolder = false
+                var currentLastModified = 0L
+                var inResponse = false
+
+                while (eventType != XmlPullParser.END_DOCUMENT) {
+                    val name = parser.name
+                    when (eventType) {
+                        XmlPullParser.START_TAG -> {
+                            if (name.contains("response", ignoreCase = true)) {
+                                inResponse = true
+                                currentHref = ""
+                                currentIsFolder = false
+                                currentLastModified = 0L
+                            } else if (inResponse) {
+                                if (name.contains("href", ignoreCase = true)) {
+                                    try { currentHref = parser.nextText() } catch (e: Exception) {}
+                                } else if (name.contains("collection", ignoreCase = true)) {
+                                    currentIsFolder = true
+                                } else if (name.contains("getlastmodified", ignoreCase = true)) {
+                                    try {
+                                        val dateStr = parser.nextText()
+                                        currentLastModified = dateFormat.get()!!.parse(dateStr)?.time ?: 0L
+                                    } catch (e: Exception) {
+                                        // Ignore
+                                    }
+                                }
+                            }
+                        }
+                        XmlPullParser.END_TAG -> {
+                            if (name.contains("response", ignoreCase = true)) {
+                                if (currentHref.isNotEmpty() && inResponse) {
+                                    try {
+                                        val decodedHref = URLDecoder.decode(currentHref, "UTF-8")
+                                        val fileName = decodedHref.trimEnd('/').substringAfterLast('/')
+
+                                        if (fileName.isNotEmpty()) {
+                                             files.add(RemoteFile(decodedHref, fileName, currentIsFolder, currentLastModified))
+                                        }
+                                    } catch (e: Exception) {
+                                        Log.e("WebDav", "Href decode error", e)
+                                    }
+                                }
+                                inResponse = false
+                            }
+                        }
+                    }
+                    eventType = parser.next()
+                }
+            } catch (e: Exception) {
+                Log.e("WebDav", "XML Parse error", e)
+            }
+            return files
+        }
     }
 }

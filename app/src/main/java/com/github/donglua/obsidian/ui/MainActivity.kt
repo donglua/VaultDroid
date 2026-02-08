@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.Toast
 import android.view.MenuItem
 import android.view.View
+import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -19,8 +20,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var repo: FileRepository
-    private lateinit var adapter: FileAdapter
-    private var currentPath = ""
+    private lateinit var adapter: TreeFileAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,31 +40,24 @@ class MainActivity : AppCompatActivity() {
 
         repo = FileRepository(this)
 
-        adapter = FileAdapter(
-            files = emptyList(),
-            onClick = { file ->
-                if (file.isDirectory) {
-                    val newPath = file.absolutePath.substringAfter(filesDir.absolutePath).trimStart('/')
-                    openFolder(newPath)
+        adapter = TreeFileAdapter(
+            nodes = emptyList(),
+            onClick = { node ->
+                if (node.file.isDirectory) {
+                    TreeManager.toggle(node.file)
+                    refreshFiles()
                 } else {
-                    val intent = Intent(this, ViewerActivity::class.java)
-                    val relative = file.absolutePath.substringAfter(filesDir.absolutePath).trimStart('/')
-                    intent.putExtra("path", relative)
-                    startActivity(intent)
+                    openFile(node.file)
                 }
             },
-            onLongClick = { file ->
-                val index = adapter.files.indexOfFirst { it.absolutePath == file.absolutePath }
-                val holder = binding.recyclerView.findViewHolderForAdapterPosition(index)
-                val anchor = holder?.itemView ?: binding.recyclerView
-
-                val popup = androidx.appcompat.widget.PopupMenu(this, anchor)
+            onLongClick = { view, node ->
+                val popup = androidx.appcompat.widget.PopupMenu(this, view)
                 popup.menu.add(0, 1, 0, getString(com.github.donglua.obsidian.R.string.action_rename))
                 popup.menu.add(0, 2, 0, getString(com.github.donglua.obsidian.R.string.action_delete))
                 popup.setOnMenuItemClickListener { item ->
                     when (item.itemId) {
-                        1 -> showRenameDialog(file)
-                        2 -> showDeleteDialog(file)
+                        1 -> showRenameDialog(node.file)
+                        2 -> showDeleteDialog(node.file)
                     }
                     true
                 }
@@ -72,20 +65,24 @@ class MainActivity : AppCompatActivity() {
             }
         )
 
-        binding.recyclerView.layoutManager = LinearLayoutManager(this)
-        binding.recyclerView.adapter = adapter
+        // Binding for recyclerViewTree might be nested or direct depending on layout structure.
+        // In flat file, it's direct.
+        binding.recyclerViewTree.layoutManager = LinearLayoutManager(this)
+        binding.recyclerViewTree.adapter = adapter
 
         binding.fabSync.setOnClickListener {
             sync()
         }
 
-        binding.navView.setNavigationItemSelectedListener { item ->
-            when (item.itemId) {
-                com.github.donglua.obsidian.R.id.nav_new_note -> showNewNoteDialog()
-                com.github.donglua.obsidian.R.id.nav_new_folder -> showNewFolderDialog()
-            }
+        // Sidebar Buttons
+        findViewById<Button>(com.github.donglua.obsidian.R.id.btn_new_note)?.setOnClickListener {
+            showNewNoteDialog()
             binding.drawerLayout.closeDrawer(GravityCompat.START)
-            true
+        }
+
+        findViewById<Button>(com.github.donglua.obsidian.R.id.btn_new_folder)?.setOnClickListener {
+            showNewFolderDialog()
+            binding.drawerLayout.closeDrawer(GravityCompat.START)
         }
 
         refreshFiles()
@@ -104,7 +101,8 @@ class MainActivity : AppCompatActivity() {
                 if (name.isNotEmpty()) {
                     val finalName = if (name.endsWith(".md")) name else "$name.md"
                     lifecycleScope.launch {
-                        val success = repo.createFile(currentPath, finalName)
+                        // Create in Root for now
+                        val success = repo.createFile("", finalName)
                         if (success) {
                             Toast.makeText(this@MainActivity, getString(com.github.donglua.obsidian.R.string.msg_success), Toast.LENGTH_SHORT).show()
                             refreshFiles()
@@ -130,7 +128,8 @@ class MainActivity : AppCompatActivity() {
                 val name = input.text.toString()
                 if (name.isNotEmpty()) {
                     lifecycleScope.launch {
-                        val success = repo.createFolder(currentPath, name)
+                         // Create in Root
+                        val success = repo.createFolder("", name)
                         if (success) {
                             Toast.makeText(this@MainActivity, getString(com.github.donglua.obsidian.R.string.msg_success), Toast.LENGTH_SHORT).show()
                             refreshFiles()
@@ -150,6 +149,9 @@ class MainActivity : AppCompatActivity() {
         input.hint = getString(com.github.donglua.obsidian.R.string.dialog_hint_name)
         input.setText(file.name)
 
+        val relativePath = file.absolutePath.substringAfter(filesDir.absolutePath).trimStart('/')
+        val parentPath = relativePath.substringBeforeLast('/', "")
+
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle(getString(com.github.donglua.obsidian.R.string.dialog_title_rename))
             .setView(input)
@@ -157,7 +159,7 @@ class MainActivity : AppCompatActivity() {
                 val newName = input.text.toString()
                 if (newName.isNotEmpty() && newName != file.name) {
                     lifecycleScope.launch {
-                        val success = repo.renameFile(currentPath, file.name, newName)
+                        val success = repo.renameFile(parentPath, file.name, newName)
                         if (success) {
                             Toast.makeText(this@MainActivity, getString(com.github.donglua.obsidian.R.string.msg_success), Toast.LENGTH_SHORT).show()
                             refreshFiles()
@@ -173,12 +175,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showDeleteDialog(file: File) {
+        val relativePath = file.absolutePath.substringAfter(filesDir.absolutePath).trimStart('/')
+        val parentPath = relativePath.substringBeforeLast('/', "")
+
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle(getString(com.github.donglua.obsidian.R.string.dialog_title_delete))
             .setMessage(getString(com.github.donglua.obsidian.R.string.dialog_message_delete, file.name))
             .setPositiveButton(getString(com.github.donglua.obsidian.R.string.dialog_btn_delete)) { _, _ ->
                 lifecycleScope.launch {
-                    val success = repo.deleteFile(currentPath, file.name)
+                    val success = repo.deleteFile(parentPath, file.name)
                     if (success) {
                         Toast.makeText(this@MainActivity, getString(com.github.donglua.obsidian.R.string.msg_success), Toast.LENGTH_SHORT).show()
                         refreshFiles()
@@ -192,31 +197,34 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun openFolder(path: String) {
-        currentPath = path
-        refreshFiles()
-    }
-
     private fun refreshFiles() {
-        val files = repo.getLocalFiles(currentPath)
-        adapter.updateFiles(files)
-        title = if (currentPath.isEmpty()) getString(com.github.donglua.obsidian.R.string.title_files) else currentPath
+        val nodes = TreeManager.buildTree(filesDir)
+        adapter.updateNodes(nodes)
     }
 
-    override fun onBackPressed() {
-        if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            binding.drawerLayout.closeDrawer(GravityCompat.START)
-        } else if (currentPath.isNotEmpty()) {
-            val parent = File(filesDir, currentPath).parentFile
-            if (parent == null || parent == filesDir) {
-                currentPath = ""
-            } else {
-                 currentPath = parent.absolutePath.substringAfter(filesDir.absolutePath).trimStart('/')
-            }
-            refreshFiles()
+    private fun openFile(file: File) {
+        val relativePath = file.absolutePath.substringAfter(filesDir.absolutePath).trimStart('/')
+
+        if (isTablet()) {
+            val fragment = ViewerFragment.newInstance(relativePath)
+            supportFragmentManager.beginTransaction()
+                .replace(com.github.donglua.obsidian.R.id.fragment_container, fragment)
+                .commit()
+
+            // Hide placeholder
+            binding.tvPlaceholder.visibility = View.GONE
         } else {
-            super.onBackPressed()
+            val intent = Intent(this, ViewerActivity::class.java)
+            intent.putExtra("path", relativePath)
+            startActivity(intent)
+
+            // Close drawer on phone after selection
+            binding.drawerLayout.closeDrawer(GravityCompat.START)
         }
+    }
+
+    private fun isTablet(): Boolean {
+        return resources.getBoolean(com.github.donglua.obsidian.R.bool.is_tablet)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -239,6 +247,14 @@ class MainActivity : AppCompatActivity() {
             } else {
                 Toast.makeText(this@MainActivity, "Sync Failed", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    override fun onBackPressed() {
+        if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            binding.drawerLayout.closeDrawer(GravityCompat.START)
+        } else {
+            super.onBackPressed()
         }
     }
 }

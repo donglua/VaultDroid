@@ -1,19 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/fragment_container"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:background="@color/white">
-
-    <TextView
-        android:id="@+id/markdown_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="16dp"
-        android:textSize="16sp"
-        android:textColor="@color/black"
-        android:lineSpacingExtra="4dp"
-        android:linksClickable="true" />
-
-</androidx.core.widget.NestedScrollView>
+    android:layout_height="match_parent" />
