@@ -1,5 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.ObsidianClient" parent="Theme.Material3.DayNight">
+    <style name="Theme.ObsidianClient" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/ms_blue</item>
         <item name="colorPrimaryVariant">@color/ms_blue_dark</item>
         <item name="colorOnPrimary">@color/white</item>
